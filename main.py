@@ -143,6 +143,11 @@ def forecast_case(case: dict) -> dict:
     log_p1 = math.log(p1)
 
     # Per hour: (log hour-1 print, log ratio to hour 1) over clean analogues.
+    # An analogue only counts if its release day was actually sampled: a
+    # curve with only a handful of the day's 24 hours is mostly gaps, and
+    # its ratios would be noise. (Every clean analogue in the practice
+    # cases clears this bar, so it changes nothing there; it guards the
+    # final, whose set adds four more launches.)
     points = {h: [] for h in range(2, 25)}
     log_firsts = []
     for comp in sorted(case.get("comparables") or [],
@@ -151,6 +156,8 @@ def forecast_case(case: dict) -> dict:
             continue
         curve = launch_day_curve(comp)
         if 1 not in curve or curve[1] <= 0:
+            continue
+        if sum(1 for h in range(1, 25) if h in curve) < 20:
             continue
         log_v1 = math.log(curve[1])
         log_firsts.append(log_v1)
